@@ -1,0 +1,5 @@
+# SOURCE: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+version: '2.2'
+services:
+  deepdetect: 
+    image: jolibrain/deepdetect_gpu
