@@ -9,5 +9,5 @@ import (
 type Img struct{}
 
 type Classifier interface {
-	classify(multipart.File) search.ImgData
+	Classify(multipart.File) search.ImgData
 }
