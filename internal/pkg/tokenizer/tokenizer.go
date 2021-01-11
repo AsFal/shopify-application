@@ -1,5 +1,5 @@
 package tokenizer
 
 type Tokenizer interface {
-	process(string) []string
+	Process(string) ([]string, error)
 }

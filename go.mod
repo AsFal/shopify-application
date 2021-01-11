@@ -4,6 +4,8 @@ go 1.15
 
 require (
 	github.com/aws/aws-sdk-go v1.36.23
+	github.com/elastic/go-elasticsearch/v6 v6.8.10 // indirect
+	github.com/elastic/go-elasticsearch/v7 v7.10.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
