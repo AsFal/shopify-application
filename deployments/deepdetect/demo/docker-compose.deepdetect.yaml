@@ -1,5 +1,7 @@
 # SOURCE: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
-version: '2.2'
+version: '3.8'
 services:
   deepdetect: 
     image: jolibrain/deepdetect_gpu
+    ports:
+      - "8000:8080"

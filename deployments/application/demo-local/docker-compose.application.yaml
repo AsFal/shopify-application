@@ -1,0 +1,23 @@
+# SOURCE: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+version: '3.8'
+services:
+  api:
+    build:
+      context: ../../..
+      dockerfile: build/api.dockerfile
+    environment:
+      - LOCAL_IMAGE_FOLDER="/images"
+      - DEEPDETECT_HOST="localhost:8000"
+      - ELASTICSEARCH_HOST="localhost:9200"
+      - PORT="8080"
+    volumes:
+      - "./images:/images"
+    ports:
+      - "8080:8080"
+
+  website:
+    build:
+      context: ../../..
+      dockerfile: build/website.dockerfile
+    ports:
+      - "9090:8080"
