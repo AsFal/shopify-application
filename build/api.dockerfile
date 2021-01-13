@@ -12,9 +12,10 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-RUN go build -o api cmd/api
+RUN go build -o api cmd/api/main.go
 
 # Development Image
 FROM scratch
 COPY --from=builder /build/api /
+EXPOSE $PORT
 ENTRYPOINT ["/api"]

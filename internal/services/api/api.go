@@ -60,9 +60,10 @@ func NewService() *Service {
 
 func (s *Service) Run() {
 	port := os.Getenv("PORT")
+	log.Println(port)
 	if port == "" {
 		log.Fatal("Valid Port is required to run api")
 	}
 	log.Println("something")
-	s.router().Run(fmt.Sprintf(":%s", port))
+	s.router().Run(fmt.Sprintf("0.0.0.0:%s", port))
 }

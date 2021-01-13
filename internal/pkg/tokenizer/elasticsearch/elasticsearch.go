@@ -19,7 +19,7 @@ type ElasticSearchTokenizer struct {
 func NewTokenizer(host string) *ElasticSearchTokenizer {
 	return &ElasticSearchTokenizer{
 		baseUrl: &url.URL{
-			Scheme: "https",
+			Scheme: "http",
 			Host:   host,
 		},
 		client: &http.Client{},

@@ -23,7 +23,7 @@ const indexName = "images"
 func NewElasticsearchSearch(host string) *ElasticsearchSearch {
 	return &ElasticsearchSearch{
 		baseUrl: &url.URL{
-			Scheme: "https",
+			Scheme: "http",
 			Host:   host,
 		},
 		client: &http.Client{},
@@ -55,21 +55,30 @@ func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURL, err
 	defer res.Body.Close()
 	var e map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(e); err != nil {
-
+		return nil, err
 	}
 
 	return nil, nil
 }
 
 func (es *ElasticsearchSearch) IndexImgData(data *search.ImgData) error {
-	c, _ := elasticsearch.NewDefaultClient()
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			es.baseUrl.String(),
+		},
+	  }
+	c , err := elasticsearch.NewClient(cfg)
+
+	if err != nil {
+		return err
+	}
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(data); err != nil {
-		// TODO: Handle error
+		return err
 	}
 
-	_, err := c.Index(
+	_, err = c.Index(
 		indexName,
 		buf,
 		c.Index.WithContext(context.Background()),

@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"log"
 )
 
 type DeepDetectClassifier struct {
@@ -19,7 +20,7 @@ type DeepDetectClassifier struct {
 func NewDeepDetectClassifier(host string) *DeepDetectClassifier {
 	return &DeepDetectClassifier{
 		baseURL: &url.URL{
-			Scheme: "https",
+			Scheme: "http",
 			Host:   host,
 		},
 		httpClient: &http.Client{},
@@ -38,10 +39,10 @@ type PredictClass struct {
 }
 type PredictResBody struct {
 	predictions struct {
-		uri     string
-		loss    float32
-		classes []PredictClass
-	}
+		uri     string `json:"uri"`
+		loss    float32 `json:"loss"`
+		classes []PredictClass `json:"classes"`
+	} `json:""prediction"`
 }
 
 func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
@@ -50,6 +51,7 @@ func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
 	encoded := base64.StdEncoding.EncodeToString(content)
 
 	// TODO: Properly set the service name
+	buf := new(bytes.Buffer)
 	body := PredictReqBody{
 		service: "service",
 		data: []string{
@@ -57,13 +59,14 @@ func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
 		},
 	}
 
-	b, _ := json.Marshal(body)
-	// TODO: Should never happen given I control the input?
+	if err := json.NewEncoder(buf).Encode(body); err != nil {
+		return "", err
+	}
 
 	req, err := http.NewRequest(
 		http.MethodPost,
 		c.baseURL.ResolveReference(&url.URL{Path: "/predict"}).String(),
-		bytes.NewReader(b),
+		buf,
 	)
 	if err != nil {
 		return "", err
@@ -71,16 +74,16 @@ func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
-	if err != nil {
+	if err != nil{
 		return "", err
 	}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(res.Body)
-	var resBody *PredictResBody
-	err = json.Unmarshal(buf.Bytes(), resBody)
-
-	// Transform classess to a more standard format
+	defer res.Body.Close()
+	resBody := new(PredictResBody)
+	if err := json.NewDecoder(res.Body).Decode(resBody); err != nil {
+		return "", err
+	}
+	log.Println(*resBody)
 
 	allClasses := ""
 	for _, class := range resBody.predictions.classes {
