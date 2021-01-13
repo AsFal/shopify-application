@@ -6,18 +6,25 @@ services:
       context: ../../..
       dockerfile: build/api.dockerfile
     environment:
-      - LOCAL_IMAGE_FOLDER="/images"
-      - DEEPDETECT_HOST="localhost:8000"
-      - ELASTICSEARCH_HOST="localhost:9200"
-      - PORT="8080"
+      - LOCAL_IMAGE_FOLDER=/images
+      - DEEPDETECT_HOST=deepdetect:8080
+      - ELASTICSEARCH_HOST=es01:9200
+      - PORT=8080
     volumes:
       - "./images:/images"
     ports:
       - "8080:8080"
+    restart: always
+    networks:
+      - backend
 
-  website:
-    build:
-      context: ../../..
-      dockerfile: build/website.dockerfile
-    ports:
-      - "9090:8080"
+  # website:
+  #   build:
+  #     context: ../../..
+  #     dockerfile: build/website.dockerfile
+  #   ports:
+  #     - "9090:8080"
+
+networks:
+  backend:
+    driver: bridge

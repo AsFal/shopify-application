@@ -19,7 +19,7 @@ services:
     ports:
       - 9200:9200
     networks:
-      - elastic
+      - backend
   es02:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
     environment:
@@ -36,7 +36,7 @@ services:
     volumes:
       - data02:/usr/share/elasticsearch/data
     networks:
-      - elastic
+      - backend
   es03:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
     environment:
@@ -53,7 +53,7 @@ services:
     volumes:
       - data03:/usr/share/elasticsearch/data
     networks:
-      - elastic
+      - backend
 
 volumes:
   data01:
@@ -64,5 +64,5 @@ volumes:
     driver: local
 
 networks:
-  elastic:
+  backend:
     driver: bridge
