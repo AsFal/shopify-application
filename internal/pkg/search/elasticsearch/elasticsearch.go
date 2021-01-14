@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"io/ioutil"
 
 	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
 	"github.com/AsFal/shopify-application/internal/pkg/search"
@@ -52,27 +51,6 @@ func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, err
 	  }
 	c , err := elasticsearch.NewClient(cfg)
 
-	// matches := make([]map[string]interface{}, 0)
-	// for _, tag := range tags {
-	// 	match := map[string]interface{}{
-	// 		"match": map[string]interface{}{
-	// 			"tags": map[string]interface{}{
-	// 				"query": tag,
-	// 				"boost": 1,
-	// 			},
-	// 		},
-	// 	}
-	// 	matches = append(matches, match)
-	// }
-
-	// query := map[string]interface{}{
-	// 	"query": map[string]interface{}{
-	// 		"bool": map[string]interface{}{
-	// 			"should":matches,
-	// 		},
-	// 	},
-	// }
-
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match": map[string]interface{}{
@@ -83,13 +61,7 @@ func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, err
 			},
 		},
 	}
-	queryJson, err := json.Marshal(query)
-	log.Println("======")
-	log.Println(string(queryJson))
-	log.Println("======")
-	log.Println(query)
-	log.Println("======")
-	log.Println(tags)
+
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(query); err != nil {
 		log.Fatalf("Error encoding query: %s", err)
@@ -106,11 +78,6 @@ func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, err
 	}
 
 	defer res.Body.Close()
-	if false {
-		b, _ := ioutil.ReadAll(res.Body)
-		log.Println(string(b))
-		return nil, nil
-	}
 	searchResponse := new(SearchResponse)
 	if err := json.NewDecoder(res.Body).Decode(searchResponse); err != nil {
 		return nil, err

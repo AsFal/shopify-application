@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"log"
 	"fmt"
 	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
 )
@@ -163,7 +162,6 @@ func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (string, error) {
 	res, err := c.httpClient.Do(req)
 	defer res.Body.Close()
 
-	log.Println(res.Status)
 	if err != nil{
 		return "", err
 	} else if isClientError(res) {

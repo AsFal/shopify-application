@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -36,7 +35,7 @@ func (t *ElasticSearchTokenizer) Process(text string) ([]string, error) {
 	}
 
 	if err := json.NewEncoder(&buf).Encode(body); err != nil {
-		log.Fatalf("Error encoding query: %s", err)
+		return nil, err
 	}
 
 	res, _ := client.Indices.Analyze(
@@ -49,7 +48,7 @@ func (t *ElasticSearchTokenizer) Process(text string) ([]string, error) {
 
 	var r map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Fatalf("Error encoding query: %s", err)
+		return nil, err
 	}
 
 	return nil, nil

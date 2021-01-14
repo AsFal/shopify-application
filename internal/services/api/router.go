@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"log"
 
 	"github.com/AsFal/shopify-application/internal/pkg/search"
 	"github.com/gin-gonic/gin"
@@ -66,7 +65,6 @@ func (s *Service) router() *gin.Engine {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			log.Println(tagsString)
 			tags = strings.Fields(tagsString)
 		} else {
 			c.String(http.StatusInternalServerError, err.Error())
@@ -87,7 +85,6 @@ func (s *Service) router() *gin.Engine {
 		// Search With Tags
 		tagsJson := c.Query("tags")
 		if tagsJson != "" {
-			log.Println(tagsJson)
 			err := json.Unmarshal([]byte(tagsJson), &tags)
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
