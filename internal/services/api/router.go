@@ -43,12 +43,13 @@ func (s *Service) router() *gin.Engine {
 		c.String(http.StatusOK, "OK")
 	})
 
-	r.POST("/_search", func(c *gin.Context) {
 
+	r.POST("/_search/_image", func(c *gin.Context) {
 		var tags []string
 
 		fileHeader, err := c.FormFile("image")
 
+		// Search With Similar Image
 		if err == nil {
 			file, _ := fileHeader.Open() // TODO: Handle error
 			if err != nil {
@@ -71,8 +72,22 @@ func (s *Service) router() *gin.Engine {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
 
+		// Input Gets Converted To Tags, Which Are Then Used to Query the Search Client
+		imgUris, err := s.SearchClient.SearchByTag(tags)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.JSON(http.StatusOK, imgUris)
+	})
+
+	r.POST("/_search", func(c *gin.Context) {
+		var tags []string
+
+		// Search With Tags
 		tagsJson := c.Query("tags")
 		if tagsJson != "" {
+			log.Println(tagsJson)
 			err := json.Unmarshal([]byte(tagsJson), &tags)
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
@@ -80,11 +95,13 @@ func (s *Service) router() *gin.Engine {
 			}
 		}
 
+		// Search With Full Text
 		text := c.Query("text")
 		if text != "" {
 			tags = strings.Fields(text)
 		}
 
+		// Input Gets Converted To Tags, Which Are Then Used to Query the Search Client
 		imgUris, err := s.SearchClient.SearchByTag(tags)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
