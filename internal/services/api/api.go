@@ -30,7 +30,8 @@ func NewService() *Service {
 	if localImageFolder != "" {
 		// Use a local folder to store the images
 		// Only used for local demo deployment or debugging purposes
-		imgRepoClient = local.NewLocalImgRepo(localImageFolder)
+		
+		imgRepoClient = local.NewLocalImgRepo(localImageFolder, os.Getenv("DOCKER_HOST_VOLUME_PATH"))
 	} else {
 		session, err := amazon.ConnectAws(
 			os.Getenv("ACCESS_KEY_ID"),
@@ -46,7 +47,10 @@ func NewService() *Service {
 		imgRepoClient = amazon.NewAmazonS3Client(session, os.Getenv("BUCKET"))
 	}
 
-	deepdetectClassifier := deepdetect.NewDeepDetectClassifier(os.Getenv("DEEPDETECT_HOST"))
+	deepdetectClassifier, err := deepdetect.NewDeepDetectClassifier(os.Getenv("DEEPDETECT_HOST"))
+	if err != nil {
+		log.Fatalf("Couldn't initialize the classifier service. Reason:\n %s", err.Error())
+	}
 	elasticsearchSearch := essearch.NewElasticsearchSearch(os.Getenv("ELASTICSEARCH_HOST"))
 	elasticsearchTokenizer := estokenizer.NewTokenizer(os.Getenv("ELASTICSEARCH_HOST"))
 

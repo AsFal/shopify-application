@@ -37,7 +37,7 @@ func ConnectAws(
 		})
 }
 
-func (c *AmazonS3Client) Upload(file multipart.File) (imgrepo.ImgURL, error) {
+func (c *AmazonS3Client) Upload(file multipart.File) (imgrepo.ImgURI, error) {
 	s3Svc := s3.New(c.session)
 
 	// Create an uploader with S3 client and default options
@@ -49,5 +49,5 @@ func (c *AmazonS3Client) Upload(file multipart.File) (imgrepo.ImgURL, error) {
 		// Key:    aws.String(filename),
 		Body: file,
 	})
-	return imgrepo.ImgURL(up.Location), err
+	return imgrepo.ImgURI(up.Location), err
 }

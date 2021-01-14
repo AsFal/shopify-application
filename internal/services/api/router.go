@@ -19,18 +19,18 @@ func (s *Service) router() *gin.Engine {
 		if err != nil {
 			c.String(http.StatusInternalServerError, "No image at 'image' form key")
 		}
-		url, err := s.ImgRepoClient.Upload(file)
+		uri, err := s.ImgRepoClient.Upload(file)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
-		log.Println(url)
-		tags, err := s.Classifier.Classify(file)
+		log.Println(uri)
+		tags, err := s.Classifier.Classify(uri)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
 		log.Println(tags)
 		imgData := &search.ImgData{
-			Url:  url,
+			URI:  uri,
 			Tags: tags,
 		}
 		err = s.SearchClient.IndexImgData(imgData)

@@ -30,7 +30,7 @@ func NewElasticsearchSearch(host string) *ElasticsearchSearch {
 	}
 }
 
-func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURL, error) {
+func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, error) {
 	c, _ := elasticsearch.NewDefaultClient()
 
 	buf := new(bytes.Buffer)

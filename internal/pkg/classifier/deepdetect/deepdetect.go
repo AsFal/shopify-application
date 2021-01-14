@@ -1,24 +1,51 @@
 package deepdetect
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"log"
+	"fmt"
+	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
 )
+
+const classifierService = "ggnet"
 
 type DeepDetectClassifier struct {
 	baseURL    *url.URL
 	httpClient *http.Client
 }
 
-func NewDeepDetectClassifier(host string) *DeepDetectClassifier {
-	return &DeepDetectClassifier{
+type HTTPClientError struct {
+	status string
+	msg string
+}
+
+func (e *HTTPClientError) Error() string {
+	return fmt.Sprintf("HTTP Client Error: %s\n %s", e.status, e.msg)
+}
+
+func isClientError(res *http.Response) bool {
+	return res.StatusCode / 100 == 4
+}
+
+func isClientConflictError(res *http.Response) bool {
+	return res.StatusCode == 409
+}
+
+
+func newHTTPClientError(res *http.Response) *HTTPClientError {
+	b, _ := ioutil.ReadAll(res.Body)
+	return &HTTPClientError{
+		status: res.Status,
+		msg: string(b),
+	}
+}
+
+func NewDeepDetectClassifier(host string) (*DeepDetectClassifier, error) {
+	c := &DeepDetectClassifier{
 		baseURL: &url.URL{
 			Scheme: "http",
 			Host:   host,
@@ -26,36 +53,96 @@ func NewDeepDetectClassifier(host string) *DeepDetectClassifier {
 		httpClient: &http.Client{},
 	}
 
+	// Create Image Service
+	body := map[string]interface{}{
+		"mllib":"caffe",
+		"description":"image classification service",
+		"type":"supervised",
+		"parameters":map[string]interface{}{
+		  "input":map[string]string{
+			"connector":"image",
+		  },
+		  "mllib":map[string]interface{}{
+			"nclasses":1000,
+		  },
+		},
+		"model":map[string]string{
+		  "repository":"/opt/models/ggnet/",
+		},
+	}
+
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(body); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		c.baseURL.ResolveReference(&url.URL{Path: "services/" + classifierService}).String(),
+		buf,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := c.httpClient.Do(req)
+
+	if err != nil {
+		return nil, err
+	} else if isClientError(res) && !isClientConflictError(res) {
+		defer res.Body.Close()
+		return nil, newHTTPClientError(res)
+	}
+	
+	return c, nil
 }
 
-type PredictReqBody struct {
-	service string   `json:"service"`
-	data    []string `json:"data"`
+type PredictRequest struct {
+	Service string   `json:"service"`
+	Parameters PredictRequestParameters `json:"parameters"`
+	Data    []string `json:"data"`
+}
+
+type PredictRequestParameters struct {
+	Output PredictRequestParametersOutput `json:"output"`
+}
+
+type PredictRequestParametersOutput struct {
+	Best int `json:"best"`
+}
+
+type PredictResponse struct {
+	Status interface{} `json:"status"`
+	Head interface{} `json:"head"`
+	Body PredictResponseBody `json:"body"`
+}
+
+type PredictResponseBody struct {
+	Predictions []struct {
+		Uri     string `json:"uri"`
+		Loss    float32 `json:"loss"`
+		Classes []PredictClass `json:"classes"`
+	} `json:"predictions"`
 }
 
 type PredictClass struct {
-	prob float64
-	cat  string
-}
-type PredictResBody struct {
-	predictions struct {
-		uri     string `json:"uri"`
-		loss    float32 `json:"loss"`
-		classes []PredictClass `json:"classes"`
-	} `json:""prediction"`
+	Prob float64 `json:"prob"`
+	Cat  string `json:"cat"`
 }
 
-func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
-	reader := bufio.NewReader(file)
-	content, _ := ioutil.ReadAll(reader)
-	encoded := base64.StdEncoding.EncodeToString(content)
-
+func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (string, error) {
 	// TODO: Properly set the service name
 	buf := new(bytes.Buffer)
-	body := PredictReqBody{
-		service: "service",
-		data: []string{
-			encoded,
+	body := PredictRequest{
+		Service: classifierService,
+		Parameters: PredictRequestParameters{
+			Output: PredictRequestParametersOutput{
+				Best: 3,
+			},
+		},
+		Data: []string{
+			string(imgURI),
 		},
 	}
 
@@ -74,20 +161,23 @@ func (c *DeepDetectClassifier) Classify(file multipart.File) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
+	defer res.Body.Close()
+
+	log.Println(res.Status)
 	if err != nil{
 		return "", err
+	} else if isClientError(res) {
+		return "", newHTTPClientError(res)
 	}
 
-	defer res.Body.Close()
-	resBody := new(PredictResBody)
-	if err := json.NewDecoder(res.Body).Decode(resBody); err != nil {
+	wrapper := new(PredictResponse)
+	if err := json.NewDecoder(res.Body).Decode(wrapper); err != nil {
 		return "", err
 	}
-	log.Println(*resBody)
 
 	allClasses := ""
-	for _, class := range resBody.predictions.classes {
-		allClasses += " " + class.cat
+	for _, class := range wrapper.Body.Predictions[0].Classes {
+		allClasses += " " + class.Cat
 	}
 	return allClasses, err
 }

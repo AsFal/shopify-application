@@ -1,11 +1,11 @@
 package classifier
 
 import (
-	"mime/multipart"
+	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
 )
 
 type Img struct{}
 
 type Classifier interface {
-	Classify(multipart.File) (string, error)
+	Classify(imgrepo.ImgURI) (string, error)
 }
