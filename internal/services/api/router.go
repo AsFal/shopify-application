@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"log"
 
 	"github.com/AsFal/shopify-application/internal/pkg/search"
 	"github.com/gin-gonic/gin"
@@ -47,7 +48,8 @@ func (s *Service) router() *gin.Engine {
 		var tags []string
 
 		fileHeader, err := c.FormFile("image")
-		if err != nil {
+
+		if err == nil {
 			file, _ := fileHeader.Open() // TODO: Handle error
 			if err != nil {
 				c.String(http.StatusInternalServerError, "No image at 'image' form key")
@@ -63,7 +65,10 @@ func (s *Service) router() *gin.Engine {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
+			log.Println(tagsString)
 			tags = strings.Fields(tagsString)
+		} else {
+			c.String(http.StatusInternalServerError, err.Error())
 		}
 
 		tagsJson := c.Query("tags")

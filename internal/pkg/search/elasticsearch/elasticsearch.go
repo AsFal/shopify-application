@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
+	"io/ioutil"
 
 	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
 	"github.com/AsFal/shopify-application/internal/pkg/search"
@@ -31,6 +33,10 @@ func NewElasticsearchSearch(host string) *ElasticsearchSearch {
 }
 
 type SearchResponse struct {
+	Hits HitWrapper `json:"hits"`
+}
+
+type HitWrapper struct {
 	Hits []Hit `json:"hits"`
 }
 
@@ -38,53 +44,81 @@ type Hit struct {
 	Source search.ImgData `json:"_source"`
 }
 
-
-
 func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, error) {
-	c, _ := elasticsearch.NewDefaultClient()
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			es.baseUrl.String(),
+		},
+	  }
+	c , err := elasticsearch.NewClient(cfg)
 
+	// matches := make([]map[string]interface{}, 0)
+	// for _, tag := range tags {
+	// 	match := map[string]interface{}{
+	// 		"match": map[string]interface{}{
+	// 			"tags": map[string]interface{}{
+	// 				"query": tag,
+	// 				"boost": 1,
+	// 			},
+	// 		},
+	// 	}
+	// 	matches = append(matches, match)
+	// }
 
-	matches := make([]map[string]interface{}, 0)
-	for _, tag := range tags {
-		match := map[string]interface{}{
-			"match": map[string]interface{}{
-				"tags": map[string]interface{}{
-					"query": tag,
-					"boost": 1,
-				},
-			},
-		}
-		matches = append(matches, match)
-	}
+	// query := map[string]interface{}{
+	// 	"query": map[string]interface{}{
+	// 		"bool": map[string]interface{}{
+	// 			"should":matches,
+	// 		},
+	// 	},
+	// }
 
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
-				"should":matches,
+			"match": map[string]interface{}{
+				"tags": map[string]interface{}{
+					"query": strings.Join(tags, " "),
+					"minimum_should_match": 1,
+				},
 			},
 		},
 	}
-
+	queryJson, err := json.Marshal(query)
+	log.Println("======")
+	log.Println(string(queryJson))
+	log.Println("======")
+	log.Println(query)
+	log.Println("======")
+	log.Println(tags)
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(query); err != nil {
 		log.Fatalf("Error encoding query: %s", err)
 	}
 
-	res, _ := c.Search(
+	res, err := c.Search(
 		c.Search.WithContext(context.Background()),
-		c.Search.WithIndex("image"),
+		c.Search.WithIndex("images"),
 		c.Search.WithBody(buf),
 		c.Search.WithPretty(),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	defer res.Body.Close()
-	var searchResponse SearchResponse
+	if false {
+		b, _ := ioutil.ReadAll(res.Body)
+		log.Println(string(b))
+		return nil, nil
+	}
+	searchResponse := new(SearchResponse)
 	if err := json.NewDecoder(res.Body).Decode(searchResponse); err != nil {
 		return nil, err
 	}
 
+
 	imgUris := make([]imgrepo.ImgURI, 0)
-	for _, hit := range searchResponse.Hits {
+	for _, hit := range searchResponse.Hits.Hits {
 		imgUris = append(imgUris, hit.Source.URI)
 	}
 
