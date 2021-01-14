@@ -1,8 +1,9 @@
 package api
 
 import (
-	"log"
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/AsFal/shopify-application/internal/pkg/search"
 	"github.com/gin-gonic/gin"
@@ -43,7 +44,7 @@ func (s *Service) router() *gin.Engine {
 
 	r.POST("/_search", func(c *gin.Context) {
 
-		var tags []imgrepo.ImgURI
+		var tags []string
 
 		fileHeader, err := c.FormFile("image")
 		if err != nil {
@@ -55,35 +56,34 @@ func (s *Service) router() *gin.Engine {
 			uri, err := s.ImgRepoClient.Upload(file)
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
-				return 
+				return
 			}
-			tags, err := s.Classifier.Classify(uri)
+			tagsString, err := s.Classifier.Classify(uri)
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
-				return 
+				return
+			}
+			tags = strings.Fields(tagsString)
+		}
+
+		tagsJson := c.Query("tags")
+		if tagsJson != "" {
+			err := json.Unmarshal([]byte(tagsJson), &tags)
+			if err != nil {
+				c.String(http.StatusInternalServerError, err.Error())
+				return
 			}
 		}
 
-		tagsJson := c.QueryMap("tags")
-		if tags != nil {
-			buf := new(bytes.Buffer)
-			if err := json.NewEncoder(buf).Encode(tags); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
-				return 
-			}
-		} 
+		text := c.Query("text")
+		if text != "" {
+			tags = strings.Fields(text)
+		}
 
-		// text := c.QueryMap("text")
-		// if text != nil {
-		// 	tags, err = s.Tokenizer.process(text)
-		// 	c.String(http.StatusInternalServerError, err.Error())
-		// 	return 
-		// }
-
-		imgUris, err = s.SearchClient.SearchByTag(strings.Fields(tags))
+		imgUris, err := s.SearchClient.SearchByTag(tags)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
-			return 
+			return
 		}
 		c.JSON(http.StatusOK, imgUris)
 	})
