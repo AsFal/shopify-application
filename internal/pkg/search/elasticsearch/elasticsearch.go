@@ -30,17 +30,42 @@ func NewElasticsearchSearch(host string) *ElasticsearchSearch {
 	}
 }
 
+type SearchResponse struct {
+	Hits []Hit `json:"hits"`
+}
+
+type Hit struct {
+	Source search.ImgData `json:"_source"`
+}
+
+
+
 func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, error) {
 	c, _ := elasticsearch.NewDefaultClient()
 
-	buf := new(bytes.Buffer)
+
+	matches := make([]map[string]interface{}, 0)
+	for _, tag := range tags {
+		match := map[string]interface{}{
+			"match": map[string]interface{}{
+				"tags": map[string]interface{}{
+					"query": tag,
+					"boost": 1,
+				},
+			},
+		}
+		matches = append(matches, match)
+	}
+
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
-			"match": map[string]interface{}{
-				"title": "test",
+			"bool": map[string]interface{}{
+				"should":matches,
 			},
 		},
 	}
+
+	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(query); err != nil {
 		log.Fatalf("Error encoding query: %s", err)
 	}
@@ -53,12 +78,17 @@ func (es *ElasticsearchSearch) SearchByTag(tags []string) ([]imgrepo.ImgURI, err
 	)
 
 	defer res.Body.Close()
-	var e map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(e); err != nil {
+	var searchResponse SearchResponse
+	if err := json.NewDecoder(res.Body).Decode(searchResponse); err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	imgUris := make([]imgrepo.ImgURI, 0)
+	for _, hit := range searchResponse.Hits {
+		imgUris = append(imgUris, hit.Source.URI)
+	}
+
+	return imgUris, nil
 }
 
 func (es *ElasticsearchSearch) IndexImgData(data *search.ImgData) error {
