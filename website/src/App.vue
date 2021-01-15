@@ -101,13 +101,9 @@ export default {
     searchText: '',
     searchTags: [],
     searchImage: null,
+    imageUrls: [],
   }),
   computed: {
-    imageUrls() {
-      return [...Array(9).keys()].map(
-        (n) => `https://picsum.photos/500/300?image=${n * 5 + 10}`,
-      );
-    },
     searchClient() {
       return axios.create({
         baseURL: process.env.VUE_APP_SEARCH_API_BASE_URL,
@@ -115,17 +111,29 @@ export default {
     },
   },
   methods: {
-    async searchByText() {
-      // this.imageUrls = await this.searchClient.post('_search')
-      console.log(this.searchText);
+    async searchByImage() {
+      const res = await this.searchClient.post('_search/_image', this.searchImage, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      this.imageUrls = res.data;
     },
     async searchByTags() {
-      // this.imageUrls = await this.searchClient.post('_search')
-      console.log(this.searchTags);
+      const res = await this.searchClient.get('_search', {
+        params: {
+          tags: JSON.stringify(this.searchTags),
+        }
+      });
+      this.imageUrls = res.data;
     },
-    async searchByImage() {
-      // this.imageUrls = await this.searchClient.post('_search')
-      console.log(this.searchImage);
+    async searchByText() {
+      const res = await this.searchClient.get('_search', {
+        params: {
+          text: this.text,
+        }
+      });
+      this.imageUrls = res.data;
     },
   },
 };
