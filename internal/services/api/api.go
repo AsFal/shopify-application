@@ -30,21 +30,16 @@ func NewService() *Service {
 	if localImageFolder != "" {
 		// Use a local folder to store the images
 		// Only used for local demo deployment or debugging purposes
-		
 		imgRepoClient = local.NewLocalImgRepo(localImageFolder, os.Getenv("DOCKER_HOST_VOLUME_PATH"))
 	} else {
-		session, err := amazon.ConnectAws(
-			os.Getenv("ACCESS_KEY_ID"),
-			os.Getenv("ACCES_KEY"),
-			os.Getenv("REGION"), // TODO: Change this to a constant
-		)
+		// TODO: The Connection function should verify that the bucket is valid
+		var err error
+		log.Println(os.Getenv("AWS_SECRET_ACCESS_KEY"))
+		imgRepoClient, err = amazon.NewAmazonS3Client(os.Getenv("REGION"), os.Getenv("BUCKET"))
 		if err != nil {
 			log.Println("The AmazonS3 credentials provided are missing or incorrect.")
 			log.Println("The API will not support Upload functionality.")
 		}
-
-		// TODO: The Connection function should verify that the bucket is valid
-		imgRepoClient = amazon.NewAmazonS3Client(session, os.Getenv("BUCKET"))
 	}
 
 	deepdetectClassifier, err := deepdetect.NewDeepDetectClassifier(os.Getenv("DEEPDETECT_HOST"))

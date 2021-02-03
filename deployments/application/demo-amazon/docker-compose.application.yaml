@@ -1,0 +1,29 @@
+# SOURCE: https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+version: '3.8'
+services:
+  api:
+    build:
+      context: ../../..
+      dockerfile: build/api.dockerfile
+    environment:
+      - REGION=ca-central-1
+      - BUCKET=asfal-shopify-images
+      - DEEPDETECT_HOST=deepdetect:8080
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-secret}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-secret}
+      - ELASTICSEARCH_HOST=es01:9200
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - backend
+  
+  # website:
+  #   build:
+  #     context: ../../..
+  #     dockerfile: build/website.dockerfile
+
+networks:
+  backend:
+    driver: bridge
