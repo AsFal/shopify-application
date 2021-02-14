@@ -13,11 +13,11 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-RUN go build -o api cmd/api/main.go
+RUN go build -o main cmd/api/main.go
 
 # Development Image
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /build/api /
+COPY --from=builder /build/main /
 EXPOSE $PORT
-ENTRYPOINT ["/api"]
+ENTRYPOINT ["/main"]
