@@ -3,7 +3,7 @@
 build:
 	- go build -o bin/api ./cmd/api/main.go
 
-test:
+unit_tests:
 	- go test ./internal/...
 
 clean:
