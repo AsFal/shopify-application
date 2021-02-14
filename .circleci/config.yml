@@ -2,6 +2,29 @@ version: 2.1
 
 # Define the jobs we want to run for this project
 jobs:
+
+  tests:
+    docker:
+      - image: circleci/golang:1.15
+    environment:
+      TEST_RESULTS: /tmp/test-results
+    steps:
+      - checkout
+      - run: mkdir -p $TEST_RESULTS
+      - restore_cache:
+        keys:
+          - go-mod-v4-{{ checksum "go.sum" }}
+      - run:
+        name: Run unit tests
+        command: make unit-test
+      - run: make build
+      - save_cache:
+        key: go-mod-v4-{{ checksum "go.sum" }}
+        paths:
+          - "/go/pkg/mod"
+          
+
+
   test-connection:
     docker:
       - image: arvindr226/alpine-ssh
