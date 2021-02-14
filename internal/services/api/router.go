@@ -13,7 +13,7 @@ func (s *Service) router() *gin.Engine {
 
 	r := gin.Default()
 
-	r.POST("/", func(c *gin.Context) {
+	r.POST("/image", func(c *gin.Context) {
 		fileHeader, err := c.FormFile("image")
 		file, _ := fileHeader.Open() // TODO: Handle error
 		if err != nil {

@@ -19,9 +19,13 @@ import (
 )
 
 const (
-	PICTURE_FOLDER  = "tests/system/pictures"
-	STAGING_API_URL = ""
+	PICTURE_FOLDER = "./pictures"
 )
+
+var STAGING_API_URL = &url.URL{
+	Scheme: "http",
+	Host:   "157.245.246.219:8080",
+}
 
 type SystemTestSuite struct {
 	suite.Suite
@@ -32,26 +36,41 @@ type SystemTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *SystemTestSuite) SetupTest() {
-	images, _ := ioutil.ReadDir(PICTURE_FOLDER)
+	images, err := ioutil.ReadDir(PICTURE_FOLDER)
+	if err != nil {
+		panic(err)
+	}
 	suite.httpClient = &http.Client{}
-	STAGING_URL_IMAGE := path.Join(STAGING_API_URL, "image")
+
+	postImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "image"})
 	for _, image := range images {
 		fmt.Println(image.Name())
 		body := buildMultipartFormDataBody(image.Name())
 		req, err := http.NewRequest(
 			http.MethodPost,
-			STAGING_URL_IMAGE,
+			postImageUrl.String(),
 			body,
 		)
+
+		if err != nil {
+			fmt.Println(err)
+		}
 		req.Header.Set("Content-Type", "multipart/form-data")
 
 		res, err := suite.httpClient.Do(req)
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 		defer res.Body.Close()
 		b, err := ioutil.ReadAll(res.Body)
+
+		if err != nil {
+			panic(err)
+		}
 		uri := string(b)
+		if res.StatusCode != 201 {
+			suite.Failf("Fail", "Received status %s. Body: %s", res.Status, uri)
+		}
 		fmt.Println(uri)
 
 		suite.localToRepoURI[image.Name()] = uri
@@ -61,23 +80,35 @@ func (suite *SystemTestSuite) SetupTest() {
 // All methods that begin with "Test" are run as tests within a
 // suite.
 func (suite *SystemTestSuite) TestImageSearchReflexivity() {
-	STAGING_URL_SEARCH_IMAGE := path.Join(STAGING_API_URL, "_search/_image")
+	searchByImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_/search/_image"})
 
 	SAMPLE_IMAGE_NAME := "cat_sky.jpg"
 
 	body := buildMultipartFormDataBody(SAMPLE_IMAGE_NAME)
 	req, err := http.NewRequest(
 		http.MethodPost,
-		STAGING_URL_SEARCH_IMAGE,
+		searchByImageUrl.String(),
 		body,
 	)
+
+	if err != nil {
+		panic(err)
+	}
 	req.Header.Set("Content-Type", "multipart/form-data")
 	res, err := suite.httpClient.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
 	defer res.Body.Close()
 
 	foundImageUris := make([]string, 0)
 	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
-		fmt.Println(err)
+		panic(err)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 	suite.True(
 		contains(foundImageUris, suite.localToRepoURI[SAMPLE_IMAGE_NAME]),
@@ -90,11 +121,7 @@ func (suite *SystemTestSuite) TestImageSearchReflexivity() {
 func (suite *SystemTestSuite) TestBasicSearchByTag() {
 	SAMPLE_IMAGE_NAME := "cat_sky.jpg"
 
-	searchImageUrl := &url.URL{
-		Scheme: "http",
-		Host:   STAGING_API_URL,
-		Path:   "_search",
-	}
+	searchImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_search"})
 	searchImageUrl.Query().Add("tags", "[cat]")
 
 	req, err := http.NewRequest(
@@ -103,12 +130,24 @@ func (suite *SystemTestSuite) TestBasicSearchByTag() {
 		nil,
 	)
 
+	if err != nil {
+		panic(err)
+	}
+
 	res, err := suite.httpClient.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
 	defer res.Body.Close()
 
 	foundImageUris := make([]string, 0)
 	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
-		fmt.Println(err)
+		panic(err)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 	suite.True(
 		contains(foundImageUris, suite.localToRepoURI[SAMPLE_IMAGE_NAME]),
@@ -121,11 +160,7 @@ func (suite *SystemTestSuite) TestBasicSearchByTag() {
 func (suite *SystemTestSuite) TestBasicFullTextSearch() {
 	SAMPLE_IMAGE_NAME := "cat_sky.jpg"
 
-	searchImageUrl := &url.URL{
-		Scheme: "http",
-		Host:   STAGING_API_URL,
-		Path:   "_search",
-	}
+	searchImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_search"})
 	searchImageUrl.Query().Add("text", "A cat with a blue sky")
 
 	req, err := http.NewRequest(
@@ -134,12 +169,24 @@ func (suite *SystemTestSuite) TestBasicFullTextSearch() {
 		nil,
 	)
 
+	if err != nil {
+		panic(err)
+	}
+
 	res, err := suite.httpClient.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
 	defer res.Body.Close()
 
 	foundImageUris := make([]string, 0)
 	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
-		fmt.Println(err)
+		panic(err)
+	}
+
+	if err != nil {
+		panic(err)
 	}
 	suite.True(
 		contains(foundImageUris, suite.localToRepoURI[SAMPLE_IMAGE_NAME]),
@@ -168,40 +215,25 @@ func buildMultipartFormDataBody(imageName string) io.Reader {
 	// TODO: Properly set the service name
 
 	file, err := os.Open(path.Join(PICTURE_FOLDER, imageName))
+	if err != nil {
+		panic(err)
+	}
 	fileContents, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
 	fi, err := file.Stat()
+	if err != nil {
+		panic(err)
+	}
 	file.Close()
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("image", fi.Name())
+	if err != nil {
+		panic(err)
+	}
 	part.Write(fileContents)
 	return body
-}
-
-func TestSomething() {
-	// TODO: Properly set the service name
-
-	PICTURE_FOLDER := "tests/system/pictures"
-	file, err := os.Open(path.Join(PICTURE_FOLDER, "cat_sky.jpg"))
-	fileContents, err := ioutil.ReadAll(file)
-	fi, err := file.Stat()
-	file.Close()
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("image", fi.Name())
-	part.Write(fileContents)
-
-	STAGING_URL := ""
-	STAGING_URL_ROOT := STAGING_URL
-	req, err := http.NewRequest(
-		http.MethodPost,
-		STAGING_URL_ROOT,
-		body,
-	)
-	req.Header.Set("Content-Type", "multipart/form-data")
-
-	httpClient := &http.Client{}
-	_, err := httpClient.Do(req)
 }

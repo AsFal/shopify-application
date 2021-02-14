@@ -4,7 +4,13 @@ cd ~/shopify-application
 
 git pull
 
+
 docker kill $(docker ps -q)
-docker rm $(docker ps -aq)
+
+docker system prune
+# Temporary solution because elastic search crashes if volumes are not empty
+# This also resets the data 
+docker volume prune
+
 
 bash deployments/application/demo-local/start.sh
