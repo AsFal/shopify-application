@@ -1,0 +1,91 @@
+openapi: 3.0.0
+info:
+  title: Shopify Image Repository API
+  description: Backend developper Shopify application project
+  version: 0.0.0
+
+paths:
+  /image:
+    post:
+      summary: Upload image to repository (PNG only)
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: The right response
+
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+
+
+  /_search/_image:
+    post:
+      summary: Search by image (PNG only)
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: A JSON list of found picture URIs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /_search:
+    get:
+      summary: Search by query
+      parameters:
+        - in: query
+          required: false
+          name: tags
+          schema:
+            type: array
+            items:
+              type: string
+            description: |
+              A JSON array containing search tags
+        - in: query
+          required: false
+          name: text
+          schema:
+            type: string
+          description: |
+            A full text search query
+
+      responses:
+        '200':
+          description: A JSON list of found picture URIs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+
+# - POST /
+#     - -F 'image=@<imagepath> (only jpg supported)
+# - POST /_search/_image
+#     - -F 'image=@<imagepath> (only jpg supported)
+# - GET /_search
+#     - Query Param 'text=full text search'
+#     - Query Param 'tags=[tag1,tag2,tag3]'
