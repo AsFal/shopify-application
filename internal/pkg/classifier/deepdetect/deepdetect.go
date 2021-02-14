@@ -3,11 +3,13 @@ package deepdetect
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"fmt"
+
 	"github.com/AsFal/shopify-application/internal/pkg/imgrepo"
+	"github.com/AsFal/shopify-application/internal/pkg/search"
 )
 
 const classifierService = "ggnet"
@@ -19,7 +21,7 @@ type DeepDetectClassifier struct {
 
 type HTTPClientError struct {
 	status string
-	msg string
+	msg    string
 }
 
 func (e *HTTPClientError) Error() string {
@@ -27,19 +29,18 @@ func (e *HTTPClientError) Error() string {
 }
 
 func isClientError(res *http.Response) bool {
-	return res.StatusCode / 100 == 4
+	return res.StatusCode/100 == 4
 }
 
 func isClientConflictError(res *http.Response) bool {
 	return res.StatusCode == 409
 }
 
-
 func newHTTPClientError(res *http.Response) *HTTPClientError {
 	b, _ := ioutil.ReadAll(res.Body)
 	return &HTTPClientError{
 		status: res.Status,
-		msg: string(b),
+		msg:    string(b),
 	}
 }
 
@@ -54,19 +55,19 @@ func NewDeepDetectClassifier(host string) (*DeepDetectClassifier, error) {
 
 	// Create Image Service
 	body := map[string]interface{}{
-		"mllib":"caffe",
-		"description":"image classification service",
-		"type":"supervised",
-		"parameters":map[string]interface{}{
-		  "input":map[string]string{
-			"connector":"image",
-		  },
-		  "mllib":map[string]interface{}{
-			"nclasses":1000,
-		  },
+		"mllib":       "caffe",
+		"description": "image classification service",
+		"type":        "supervised",
+		"parameters": map[string]interface{}{
+			"input": map[string]string{
+				"connector": "image",
+			},
+			"mllib": map[string]interface{}{
+				"nclasses": 1000,
+			},
 		},
-		"model":map[string]string{
-		  "repository":"/opt/models/ggnet/",
+		"model": map[string]string{
+			"repository": "/opt/models/ggnet/",
 		},
 	}
 
@@ -93,14 +94,14 @@ func NewDeepDetectClassifier(host string) (*DeepDetectClassifier, error) {
 		defer res.Body.Close()
 		return nil, newHTTPClientError(res)
 	}
-	
+
 	return c, nil
 }
 
 type PredictRequest struct {
-	Service string   `json:"service"`
+	Service    string                   `json:"service"`
 	Parameters PredictRequestParameters `json:"parameters"`
-	Data    []string `json:"data"`
+	Data       []string                 `json:"data"`
 }
 
 type PredictRequestParameters struct {
@@ -112,25 +113,25 @@ type PredictRequestParametersOutput struct {
 }
 
 type PredictResponse struct {
-	Status interface{} `json:"status"`
-	Head interface{} `json:"head"`
-	Body PredictResponseBody `json:"body"`
+	Status interface{}         `json:"status"`
+	Head   interface{}         `json:"head"`
+	Body   PredictResponseBody `json:"body"`
 }
 
 type PredictResponseBody struct {
-	Predictions []struct {
-		Uri     string `json:"uri"`
-		Loss    float32 `json:"loss"`
+	Predictions struct {
+		Uri     string         `json:"uri"`
+		Loss    float32        `json:"loss"`
 		Classes []PredictClass `json:"classes"`
 	} `json:"predictions"`
 }
 
 type PredictClass struct {
 	Prob float64 `json:"prob"`
-	Cat  string `json:"cat"`
+	Cat  string  `json:"cat"`
 }
 
-func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (string, error) {
+func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (search.Tags, error) {
 	// TODO: Properly set the service name
 	buf := new(bytes.Buffer)
 	body := PredictRequest{
@@ -162,7 +163,7 @@ func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (string, error) {
 	res, err := c.httpClient.Do(req)
 	defer res.Body.Close()
 
-	if err != nil{
+	if err != nil {
 		return "", err
 	} else if isClientError(res) {
 		return "", newHTTPClientError(res)
@@ -174,8 +175,8 @@ func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (string, error) {
 	}
 
 	allClasses := ""
-	for _, class := range wrapper.Body.Predictions[0].Classes {
+	for _, class := range wrapper.Body.Predictions.Classes {
 		allClasses += " " + class.Cat
 	}
-	return allClasses, err
+	return search.Tags(allClasses), err
 }

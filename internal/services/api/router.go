@@ -42,7 +42,6 @@ func (s *Service) router() *gin.Engine {
 		c.String(http.StatusOK, "OK")
 	})
 
-
 	r.POST("/_search/_image", func(c *gin.Context) {
 		var tags []string
 
@@ -65,7 +64,7 @@ func (s *Service) router() *gin.Engine {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			tags = strings.Fields(tagsString)
+			tags = strings.Fields(string(tagsString))
 		} else {
 			c.String(http.StatusInternalServerError, err.Error())
 		}
