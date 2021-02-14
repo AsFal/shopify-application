@@ -25,3 +25,9 @@ workflows:
             branches:
               only:
                 - master
+    test-connection:
+      - pull-and-build:
+          filters:
+            branches:
+              except:
+                - master
