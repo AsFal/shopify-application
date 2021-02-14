@@ -1,4 +1,6 @@
-package system_tests
+// +build system
+
+package system_test
 
 import (
 	"testing"

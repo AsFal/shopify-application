@@ -6,6 +6,9 @@ build:
 unit_tests:
 	- go test ./internal/...
 
+system_tests:
+	- go test ./tests/... -tags system
+
 clean:
 	- rm -r bin
 
