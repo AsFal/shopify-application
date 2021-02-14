@@ -28,7 +28,12 @@ jobs:
       - image: arvindr226/alpine-ssh
     steps:
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "touch test.txt"
-      - run: echo $AWS_ACCESS_KEY_ID >> .aws_cred && echo $AWS_SECRET_ACCESS_KEY .aws_cred &&scp .aws_cred $USER@$IP:.aws_cred
+      - run: |
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .aws_cred 
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .aws_cred 
+        scp .aws_cred $USER@$IP:.aws_cred
+        source .aws_cred
+        rm .aws_cred
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "IPA=$IP echo $IPA > test.txt"
 
   pull-and-build:
