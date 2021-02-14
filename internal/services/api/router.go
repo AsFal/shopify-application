@@ -15,6 +15,11 @@ func (s *Service) router() *gin.Engine {
 
 	r.POST("/image", func(c *gin.Context) {
 		fileHeader, err := c.FormFile("image")
+		if err != nil {
+			c.Error(err)
+			c.Status(http.StatusBadRequest)
+			return
+		}
 		file, _ := fileHeader.Open() // TODO: Handle error
 		if err != nil {
 			c.String(http.StatusInternalServerError, "No image at 'image' form key")
