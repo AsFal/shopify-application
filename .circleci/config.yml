@@ -54,3 +54,9 @@ workflows:
             branches:
               ignore:
                 - master
+      - tests:
+          filters:
+            branches:
+              ignore:
+                - master
+
