@@ -17,7 +17,7 @@ func (s *Service) router() *gin.Engine {
 		fileHeader, err := c.FormFile("image")
 		if err != nil {
 			c.Error(err)
-			c.Status(http.StatusBadRequest)
+			c.String(http.StatusBadRequest, "%s", c.Errors.String())
 			return
 		}
 		file, _ := fileHeader.Open() // TODO: Handle error
