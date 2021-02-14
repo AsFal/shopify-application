@@ -22,6 +22,23 @@ jobs:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
+    
+  system-tests:
+    docker:
+      - image: circleci/golang:1.15
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v4-{{ checksum "go.sum" }}
+      - run:
+          name: Run unit tests
+          command: make system_tests
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+    
           
   test-connection:
     docker:
@@ -36,11 +53,17 @@ jobs:
         rm .aws_cred
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "IPA=$IP echo $IPA > test.txt"
 
-  pull-and-build:
+  pull-and-deploy:
     docker:
       - image: arvindr226/alpine-ssh
     steps:
       - checkout
+      - run: |
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .aws_cred 
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .aws_cred 
+        scp .aws_cred $USER@$IP:.aws_cred
+        source .aws_cred
+        rm .aws_cred
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "./deploy.sh"
 
 # Orchestrate our job run sequence
@@ -48,11 +71,12 @@ workflows:
   version: 2
   build-project:
     jobs:
-      - pull-and-build:
+      - pull-and-deploy-staging:
           filters:
             branches:
               only:
                 - master
+
       - test-connection:
           filters:
             branches:
@@ -64,3 +88,10 @@ workflows:
               ignore:
                 - master
 
+      - system-tests:
+          requires:
+            - pull-and-deploy-staging
+          filters:
+            branches:
+              only:
+                - master
