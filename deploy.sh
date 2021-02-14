@@ -2,6 +2,8 @@
 
 cd ~/shopify-application
 
+git pull
+
 docker kill $(docker -q)
 docker rm $(docker -aq)
 
