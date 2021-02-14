@@ -28,5 +28,5 @@ workflows:
       - test-connection:
           filters:
             branches:
-              except:
+              ignore:
                 - master
