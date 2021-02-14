@@ -7,7 +7,7 @@ jobs:
       - image: arvindr226/alpine-ssh
     steps:
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "touch test.txt"
-      - run: scp $IP $USER@$IP:.env
+      - run: echo $USER > .host_env && scp .host_env $USER@$IP:.env
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "IPA=$IP echo $IPA > test.txt"
 
   pull-and-build:
