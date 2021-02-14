@@ -235,5 +235,6 @@ func buildMultipartFormDataBody(imageName string) io.Reader {
 		panic(err)
 	}
 	part.Write(fileContents)
+	writer.Close()
 	return body
 }
