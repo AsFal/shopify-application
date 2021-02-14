@@ -63,6 +63,7 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .aws_cred 
           echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .aws_cred 
           scp .aws_cred $USER@$IP:.aws_cred
+      - run: scp ./deploy.sh $USER@$IP:shopify-application/deploy.sh
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "cd shopify-application && ./deploy.sh"
 
 # Orchestrate our job run sequence
