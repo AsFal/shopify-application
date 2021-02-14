@@ -53,7 +53,7 @@ jobs:
           rm .aws_cred
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "IPA=$IP echo $IPA > test.txt"
 
-  pull-and-deploy:
+  pull-and-deploy-staging:
     docker:
       - image: arvindr226/alpine-ssh
     steps:
