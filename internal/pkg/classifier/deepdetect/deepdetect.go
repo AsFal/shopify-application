@@ -119,7 +119,7 @@ type PredictResponse struct {
 }
 
 type PredictResponseBody struct {
-	Predictions struct {
+	Predictions []struct {
 		Uri     string         `json:"uri"`
 		Loss    float32        `json:"loss"`
 		Classes []PredictClass `json:"classes"`
@@ -175,7 +175,7 @@ func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (search.Tags, err
 	}
 
 	allClasses := ""
-	for _, class := range wrapper.Body.Predictions.Classes {
+	for _, class := range wrapper.Body.Predictions[0].Classes {
 		allClasses += " " + class.Cat
 	}
 	return search.Tags(allClasses), err

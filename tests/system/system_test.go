@@ -45,7 +45,7 @@ func (suite *SystemTestSuite) SetupTest() {
 	postImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "image"})
 	for _, image := range images {
 		fmt.Println(image.Name())
-		body := buildMultipartFormDataBody(image.Name())
+		body, contentType := buildMultipartFormDataBody(image.Name())
 		req, err := http.NewRequest(
 			http.MethodPost,
 			postImageUrl.String(),
@@ -55,7 +55,7 @@ func (suite *SystemTestSuite) SetupTest() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		req.Header.Set("Content-Type", "multipart/form-data")
+		req.Header.Set("Content-Type", contentType)
 
 		res, err := suite.httpClient.Do(req)
 		if err != nil {
@@ -84,7 +84,7 @@ func (suite *SystemTestSuite) TestImageSearchReflexivity() {
 
 	SAMPLE_IMAGE_NAME := "cat_sky.jpg"
 
-	body := buildMultipartFormDataBody(SAMPLE_IMAGE_NAME)
+	body, contentType := buildMultipartFormDataBody(SAMPLE_IMAGE_NAME)
 	req, err := http.NewRequest(
 		http.MethodPost,
 		searchByImageUrl.String(),
@@ -94,7 +94,7 @@ func (suite *SystemTestSuite) TestImageSearchReflexivity() {
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Content-Type", "multipart/form-data")
+	req.Header.Set("Content-Type", contentType)
 	res, err := suite.httpClient.Do(req)
 
 	if err != nil {
@@ -211,7 +211,7 @@ func TestSystemTestSuite(t *testing.T) {
 	suite.Run(t, new(SystemTestSuite))
 }
 
-func buildMultipartFormDataBody(imageName string) io.Reader {
+func buildMultipartFormDataBody(imageName string) (io.Reader, string) {
 	// TODO: Properly set the service name
 
 	file, err := os.Open(path.Join(PICTURE_FOLDER, imageName))
@@ -230,11 +230,12 @@ func buildMultipartFormDataBody(imageName string) io.Reader {
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
+	defer writer.Close()
+
 	part, err := writer.CreateFormFile("image", fi.Name())
 	if err != nil {
 		panic(err)
 	}
 	part.Write(fileContents)
-	writer.Close()
-	return body
+	return body, writer.FormDataContentType()
 }
