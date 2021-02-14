@@ -12,7 +12,8 @@ jobs:
       - checkout
       - run: mkdir -p $TEST_RESULTS
       - restore_cache:
-        keys:
+        key: go-mod-v4-{{ checksum "go.sum" }}
+        paths:
           - go-mod-v4-{{ checksum "go.sum" }}
       - run:
         name: Run unit tests
@@ -23,14 +24,12 @@ jobs:
         paths:
           - "/go/pkg/mod"
           
-
-
   test-connection:
     docker:
       - image: arvindr226/alpine-ssh
     steps:
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "touch test.txt"
-      - run: echo $USER > .host_env && scp .host_env $USER@$IP:.env
+      - run: echo $AWS_ACCESS_KEY_ID >> .aws_cred && echo $AWS_SECRET_ACCESS_KEY .aws_cred &&scp .aws_cred $USER@$IP:.aws_cred
       - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "IPA=$IP echo $IPA > test.txt"
 
   pull-and-build:
