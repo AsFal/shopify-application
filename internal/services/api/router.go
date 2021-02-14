@@ -44,7 +44,7 @@ func (s *Service) router() *gin.Engine {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.String(http.StatusOK, string(uri))
+		c.String(http.StatusCreated, string(uri))
 	})
 
 	r.POST("/_search/_image", func(c *gin.Context) {

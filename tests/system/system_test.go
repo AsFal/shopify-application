@@ -43,6 +43,7 @@ func (suite *SystemTestSuite) SetupTest() {
 	suite.httpClient = &http.Client{}
 
 	postImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "image"})
+	suite.localToRepoURI = make(map[string]string, 0)
 	for _, image := range images {
 		fmt.Println(image.Name())
 		body, contentType := buildMultipartFormDataBody(image.Name())
