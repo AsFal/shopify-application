@@ -58,6 +58,7 @@ jobs:
       - image: arvindr226/alpine-ssh
     steps:
       - checkout
+      - run: ssh -oStrictHostKeyChecking=no -v $USER@$IP "touch init.txt"
       - run: |
           echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .aws_cred 
           echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .aws_cred 
