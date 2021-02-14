@@ -1,6 +1,22 @@
 # Shopify Application
 The following application uses Elastic Search, Deep Detect and Amazon S3 to implement a search API over an image repo. The user can search by iamge, serach by text or search by tags.
 
+The deployment host must be manually configured
+- Setup circleci user
+- Add circleci user to docker group
+- Add circle ci user ssh key to github
+- Add circle ci ssh key to user auth key
+- Do the following for elastic search
+Add to /etc/sysctl.conf
+```sh
+grep vm.max_map_count /etc/sysctl.conf
+vm.max_map_count=262144
+```
+And run the following so the live system is up to data
+```sh
+sysctl -w vm.max_map_count=262144
+```
+
 ## Demo Deployment
 
 I've created entrypoints for 2 demo deployments. They both only require an installation of Docker and Docker Compose on the host system.
