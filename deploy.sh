@@ -12,5 +12,4 @@ docker system prune --force
 # This also resets the data 
 docker volume prune --force
 
-
 source ../.aws_cred && bash deployments/application/demo-amazon/start.sh
