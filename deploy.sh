@@ -13,4 +13,4 @@ docker system prune --force
 docker volume prune --force
 
 
-bash deployments/application/demo-local/start.sh
+source ../.aws_cred && bash deployments/application/demo-amazon/start.sh
