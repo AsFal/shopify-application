@@ -161,6 +161,9 @@ func (c *DeepDetectClassifier) Classify(imgURI imgrepo.ImgURI) (search.Tags, err
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
 	defer res.Body.Close()
 
 	if err != nil {

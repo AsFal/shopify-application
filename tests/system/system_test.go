@@ -45,7 +45,6 @@ func (suite *SystemTestSuite) SetupTest() {
 	postImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "image"})
 	suite.localToRepoURI = make(map[string]string, 0)
 	for _, image := range images {
-		fmt.Println(image.Name())
 		body, contentType := buildMultipartFormDataBody(image.Name())
 		req, err := http.NewRequest(
 			http.MethodPost,
@@ -54,7 +53,7 @@ func (suite *SystemTestSuite) SetupTest() {
 		)
 
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -72,7 +71,6 @@ func (suite *SystemTestSuite) SetupTest() {
 		if res.StatusCode != 201 {
 			suite.Failf("Fail", "Received status %s. Body: %s", res.Status, uri)
 		}
-		fmt.Println(uri)
 
 		suite.localToRepoURI[image.Name()] = uri
 	}
@@ -81,7 +79,8 @@ func (suite *SystemTestSuite) SetupTest() {
 // All methods that begin with "Test" are run as tests within a
 // suite.
 func (suite *SystemTestSuite) TestImageSearchReflexivity() {
-	searchByImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_/search/_image"})
+	searchByImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_search/_image"})
+	fmt.Println(searchByImageUrl.String())
 
 	SAMPLE_IMAGE_NAME := "cat_sky.jpg"
 
@@ -91,26 +90,29 @@ func (suite *SystemTestSuite) TestImageSearchReflexivity() {
 		searchByImageUrl.String(),
 		body,
 	)
+	fmt.Println(searchByImageUrl.String())
 
 	if err != nil {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
 	res, err := suite.httpClient.Do(req)
-
 	if err != nil {
 		panic(err)
 	}
+
 	defer res.Body.Close()
 
+	all, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(all))
 	foundImageUris := make([]string, 0)
-	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
+	if err := json.Unmarshal(all, &foundImageUris); err != nil {
 		panic(err)
 	}
 
-	if err != nil {
-		panic(err)
-	}
 	suite.True(
 		contains(foundImageUris, suite.localToRepoURI[SAMPLE_IMAGE_NAME]),
 		"%s (uri: %s) missing from found uris %s",
@@ -124,6 +126,8 @@ func (suite *SystemTestSuite) TestBasicSearchByTag() {
 
 	searchImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_search"})
 	searchImageUrl.Query().Add("tags", "[cat]")
+
+	fmt.Println(searchImageUrl.String())
 
 	req, err := http.NewRequest(
 		http.MethodGet,
@@ -142,8 +146,13 @@ func (suite *SystemTestSuite) TestBasicSearchByTag() {
 	}
 	defer res.Body.Close()
 
+	all, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(all))
 	foundImageUris := make([]string, 0)
-	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
+	if err := json.Unmarshal(all, &foundImageUris); err != nil {
 		panic(err)
 	}
 
@@ -164,6 +173,8 @@ func (suite *SystemTestSuite) TestBasicFullTextSearch() {
 	searchImageUrl := STAGING_API_URL.ResolveReference(&url.URL{Path: "_search"})
 	searchImageUrl.Query().Add("text", "A cat with a blue sky")
 
+	fmt.Println(searchImageUrl.String())
+
 	req, err := http.NewRequest(
 		http.MethodGet,
 		searchImageUrl.String(),
@@ -181,8 +192,13 @@ func (suite *SystemTestSuite) TestBasicFullTextSearch() {
 	}
 	defer res.Body.Close()
 
+	all, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(all))
 	foundImageUris := make([]string, 0)
-	if err := json.NewDecoder(res.Body).Decode(&foundImageUris); err != nil {
+	if err := json.Unmarshal(all, &foundImageUris); err != nil {
 		panic(err)
 	}
 

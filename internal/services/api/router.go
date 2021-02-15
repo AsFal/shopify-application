@@ -83,7 +83,7 @@ func (s *Service) router() *gin.Engine {
 		c.JSON(http.StatusOK, imgUris)
 	})
 
-	r.POST("/_search", func(c *gin.Context) {
+	r.GET("/_search", func(c *gin.Context) {
 		var tags []string
 
 		// Search With Tags
