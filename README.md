@@ -40,3 +40,4 @@ Both deployments will start a container with a mapped port on localhost:8080. Th
 - GET /_search
     - Query Param 'text=full text search'
     - Query Param 'tags=[tag1,tag2,tag3]'
+
