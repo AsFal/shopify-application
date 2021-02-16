@@ -106,16 +106,18 @@ export default {
   computed: {
     searchClient() {
       return axios.create({
-        baseURL: process.env.VUE_APP_SEARCH_API_BASE_URL,
+        baseURL: 'http://157.245.246.219:8080',
       });
     },
   },
   methods: {
     async searchByImage() {
-      const res = await this.searchClient.post('_search/_image', this.searchImage, {
+      const bodyFormData = new FormData();
+      bodyFormData.append('image', this.searchImage);
+      const res = await this.searchClient.post('_search/_image', bodyFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        }
+        },
       });
       this.imageUrls = res.data;
     },
@@ -123,15 +125,15 @@ export default {
       const res = await this.searchClient.get('_search', {
         params: {
           tags: JSON.stringify(this.searchTags),
-        }
+        },
       });
       this.imageUrls = res.data;
     },
     async searchByText() {
       const res = await this.searchClient.get('_search', {
         params: {
-          text: this.text,
-        }
+          text: this.searchText,
+        },
       });
       this.imageUrls = res.data;
     },

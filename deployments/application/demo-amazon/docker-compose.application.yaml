@@ -23,6 +23,8 @@ services:
   #   build:
   #     context: ../../..
   #     dockerfile: build/website.dockerfile
+  #   ports:
+  #     - "8000:80"
 
 networks:
   backend:
