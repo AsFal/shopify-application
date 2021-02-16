@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/AsFal/shopify-application/internal/pkg/search"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func (s *Service) router() *gin.Engine {
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	r.POST("/image", func(c *gin.Context) {
 		fileHeader, err := c.FormFile("image")
