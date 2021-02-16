@@ -1,5 +1,33 @@
 # Shopify Application
-The following application uses Elastic Search, Deep Detect and Amazon S3 to implement a search API over an image repo. The user can search by iamge, serach by text or search by tags.
+
+## Project Context
+
+You can save your work in a text file, link, etc. and have it ready with you for your technical interview (you can also add it on GitHub). 
+
+TASK: Build an image repository.
+
+You can tackle this challenge using any technology you want. This is an open-ended task.
+
+Please provide brief instructions on how to use your application.
+
+Extra Information: You can, if you wish, use frameworks, libraries and external dependencies to help you get faster to the parts you are interested in building, if this helps you; or start from scratch.
+
+Please focus on what interests you the most. If you need inspiration, here are examples of what you can work on. IF you work on these ideas, we recommend choosing only one or two.
+
+SEARCH function
+- from characteristics of the images
+- from text
+- from an image (search for similar images)
+ADD image(s) to the repository
+- private or public (permissions)
+
+## Project Description
+
+
+The following application uses Elastic Search, Deep Detect and Amazon S3 to implement a search API over an image repo. The user can search by iamge, serach by text or search by tags. For a descrption of the API routes see the swagger spec in the api folder.
+
+
+[Design Process](./doc/design.md)
 
 The deployment host must be manually configured
 - Setup circleci user
@@ -30,14 +58,3 @@ The second uses a Amazon S3 Bucket to store the images, and comes with a VueJs f
 ```sh
 bash deployments/application/demo-amazon/start.sh
 ```
-
-## API Endpoints
-Both deployments will start a container with a mapped port on localhost:8080. The API has the following 3 endpoints:
-- POST /
-    - -F 'image=@<imagepath> (only jpg supported)
-- POST /_search/_image
-    - -F 'image=@<imagepath> (only jpg supported)
-- GET /_search
-    - Query Param 'text=full text search'
-    - Query Param 'tags=[tag1,tag2,tag3]'
-
